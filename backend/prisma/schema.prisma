@@ -1,0 +1,78 @@
+// schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Usuario {
+  id         Int          @id @default(autoincrement())
+  nome       String
+  email      String       @unique
+  senhaHash  String
+  role       Role
+  criadoEm   DateTime     @default(now())
+
+  servicos   Servico[]    @relation("PrestadorServicos")
+  agendas    Agenda[]     @relation("PrestadorAgendas")
+  contratos  Contratacao[] @relation("ClienteContratacoes")
+}
+
+model Servico {
+  id          Int              @id @default(autoincrement())
+  prestador   Usuario          @relation("PrestadorServicos", fields: [prestadorId], references: [id])
+  prestadorId Int
+  tipo        String
+  nome        String
+  descricao   String
+  criadoEm    DateTime         @default(now())
+
+  variacoes   VariacaoServico[]
+}
+
+model VariacaoServico {
+  id         Int          @id @default(autoincrement())
+  servico    Servico      @relation(fields: [servicoId], references: [id])
+  servicoId  Int
+  nome       String
+  preco      Decimal      @db.Decimal(10,2)
+  duracaoMin Int
+
+  contratos  Contratacao[]
+}
+
+model Agenda {
+  id          Int          @id @default(autoincrement())
+  prestador   Usuario      @relation("PrestadorAgendas", fields: [prestadorId], references: [id])
+  prestadorId Int
+  dataInicio  DateTime
+  dataFim     DateTime
+  disponivel  Boolean      @default(true)
+
+  contratos   Contratacao[]
+}
+
+model Contratacao {
+  id            Int             @id @default(autoincrement())
+  cliente       Usuario         @relation("ClienteContratacoes", fields: [clienteId], references: [id])
+  clienteId     Int
+  variacao      VariacaoServico @relation(fields: [variacaoId], references: [id])
+  variacaoId    Int
+  agenda        Agenda          @relation(fields: [agendaId], references: [id])
+  agendaId      Int
+  status        Status          @default(ATIVA)
+  contratadoEm  DateTime        @default(now())
+}
+
+enum Role {
+  CLIENTE
+  PRESTADOR
+}
+
+enum Status {
+  ATIVA
+  CANCELADA
+}
