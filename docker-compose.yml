@@ -27,9 +27,24 @@ services:
     volumes:
       - ./backend:/backend:cached
       - backend_node_modules:/backend/node_modules
-
     command: sh -c "npm install && npx prisma generate && npm start"
+
+  frontend:
+    build: ./frontend
+    container_name: super1-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173" # agora você acessa em http://localhost:5173
+    working_dir: /frontend
+    volumes:
+      - ./frontend:/frontend:cached
+      - frontend_node_modules:/frontend/node_modules
+    command: sh -c "npm install && npm run dev -- --host"
+
 
 volumes:
   db_data:
   backend_node_modules:
+  frontend_node_modules:

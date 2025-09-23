@@ -1,10 +1,22 @@
-FROM node:20
+# Etapa de build
+FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
 
 COPY . .
+RUN npm run build
 
-EXPOSE 5173
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Etapa de execução
+FROM node:20-alpine
+WORKDIR /app
+
+COPY --from=build /app/package*.json ./
+RUN npm install --omit=dev
+
+COPY --from=build /app/build ./build
+COPY --from=build /app/.svelte-kit ./.svelte-kit
+
+EXPOSE 3000
+CMD ["node", "build"]
