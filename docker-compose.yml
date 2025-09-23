@@ -1,0 +1,35 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    container_name: super1-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: marketplace
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: super1-backend
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://admin:secret@db:5432/marketplace"
+    working_dir: /backend
+    volumes:
+      - ./backend:/backend:cached
+      - backend_node_modules:/backend/node_modules
+
+    command: sh -c "npm install && npx prisma generate && npm start"
+
+volumes:
+  db_data:
+  backend_node_modules:
