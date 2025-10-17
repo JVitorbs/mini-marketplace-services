@@ -9,7 +9,7 @@
     name: "Manicure",
     description: "Profissional com 20 anos de experiência",
     variations: [
-      { name: "Pé", price: 20, duration: 30 },
+      { name: "Pé", price: 50, duration: 30 },
       { name: "Mão", price: 25, duration: 30 }
     ]
   };
