@@ -8,7 +8,10 @@
   let loading = false;
   let error = null;
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+  // lista de categorias extraída dos serviços
+  let categories = [];
+
+  const API_BASE = import.meta.env.VITE_API_BASE ?? import.meta.env.VITE_SERVER_API_BASE ?? 'http://localhost:3000';
 
   async function loadServices() {
     loading = true;
@@ -17,18 +20,33 @@
       const res = await fetch(`${API_BASE}/servicos`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+
+      // DEBUG: inspecione o payload bruto no console
+      console.debug('GET /servicos ->', data);
+
       // normaliza nomes de campos do backend para o esperado no frontend
-      services = data.map(s => ({
+      services = (data || []).map(s => ({
         id: s.id,
-        name: s.nome || s.name,
-        description: s.descricao || s.description,
+        name: s.nome ?? s.name,
+        description: s.descricao ?? s.description,
+        tipo: s.tipo,
+        prestador: s.prestador ? {
+          id: s.prestador.id,
+          nome: s.prestador.nome,
+          email: s.prestador.email
+        } : null,
         variations: (s.variacoes || s.variations || []).map(v => ({
-          name: v.nome || v.name,
-          price: v.preco || v.price || v.valor || 0,
-          duration: v.duracaoMin || v.duration || v.duracao || 0
+          id: v.id,
+          name: v.nome ?? v.name,
+          price: Number(v.preco ?? v.price ?? 0),
+          durationMin: v.duracaoMin ?? v.duration ?? 0
         }))
       }));
-      filtered = services;
+
+      // extrai categorias únicas presentes nos serviços
+      categories = Array.from(new Set(services.map(s => (s.tipo || '').trim()).filter(Boolean)));
+
+      filtered = services.slice();
     } catch (err) {
       console.error('Erro carregando serviços', err);
       error = err.message || String(err);
@@ -39,9 +57,10 @@
 
   function handleFilter({ search, category }) {
     const q = (search || '').toLowerCase().trim();
+    const cat = (category || '').toLowerCase().trim();
     filtered = services.filter(s => {
       const matchesSearch = !q || (s.name && s.name.toLowerCase().includes(q)) || (s.description && s.description.toLowerCase().includes(q));
-      const matchesCategory = !category || (s.tipo && s.tipo.toLowerCase() === category.toLowerCase()) || (s.category && s.category.toLowerCase() === category.toLowerCase());
+      const matchesCategory = !cat || (s.tipo && s.tipo.toLowerCase() === cat);
       return matchesSearch && matchesCategory;
     });
   }
@@ -52,7 +71,8 @@
 </script>
 
 <h1 class="text-2xl font-bold mb-4">Serviços disponíveis</h1>
-<ServiceFilter onFilter={handleFilter} />
+<!-- passa as categorias que existem -->
+<ServiceFilter {categories} onFilter={handleFilter} />
 
 {#if loading}
   <p>Carregando serviços...</p>
