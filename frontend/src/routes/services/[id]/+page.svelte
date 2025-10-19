@@ -11,73 +11,79 @@
   let loading = false;
   let error = null;
 
+  const normalize = (s) => ({
+    id: s.id ?? params.id,
+    name: s.nome || s.name || "Serviço sem nome",
+    description: s.descricao || s.description || "Sem descrição disponível.",
+    variations: (s.variacoes || s.variations || []).map((v) => ({
+      name: v.nome || v.name || "Padrão",
+      price: v.preco ?? v.price ?? v.valor ?? 0,
+      duration: v.duracaoMin ?? v.duration ?? v.duracao ?? 0,
+    })),
+  });
+
   async function loadService() {
     loading = true;
     error = null;
 
-    function normalize(s) {
-      return {
-        id: s.id ?? params.id,
-        name: s.nome || s.name || "Serviço",
-        description: s.descricao || s.description || "",
-        variations: (s.variacoes || s.variations || []).map(v => ({
-          name: v.nome || v.name || "",
-          price: v.preco ?? v.price ?? v.valor ?? 0,
-          duration: v.duracaoMin ?? v.duration ?? v.duracao ?? 0
-        }))
-      };
-    }
-
     try {
-      // tenta buscar por id diretamente
-      let res = await fetch(`${API_BASE}/servicos/${params.id}`);
+      // 1️⃣ Tenta buscar diretamente pelo ID
+      const res = await fetch(`${API_BASE}/servicos/${params.id}`);
+
       if (res.ok) {
-        const s = await res.json();
-        service = normalize(s);
+        service = normalize(await res.json());
         return;
       }
 
-      // se deu 404 ou outra resposta, tenta buscar todos e procurar pelo id/slug/nome
-      console.warn(`GET /servicos/${params.id} returned ${res.status}, falling back to list`);
+      // 2️⃣ Se falhar, busca todos e tenta encontrar correspondência
+      console.warn(
+        `GET /servicos/${params.id} retornou ${res.status}, tentando lista completa...`
+      );
       const listRes = await fetch(`${API_BASE}/servicos`);
       if (!listRes.ok) throw new Error(`HTTP ${listRes.status}`);
-      const list = await listRes.json();
 
-      const found = list.find(item =>
-        String(item.id) === String(params.id) ||
-        item.slug === params.id ||
-        (item.nome && item.nome.toLowerCase() === String(params.id).toLowerCase()) ||
-        (item.name && item.name.toLowerCase() === String(params.id).toLowerCase())
+      const list = await listRes.json();
+      const found = list.find(
+        (item) =>
+          String(item.id) === String(params.id) ||
+          item.slug === params.id ||
+          (item.nome &&
+            item.nome.toLowerCase() === String(params.id).toLowerCase()) ||
+          (item.name &&
+            item.name.toLowerCase() === String(params.id).toLowerCase())
       );
 
-      if (found) {
-        service = normalize(found);
-      } else {
-        throw new Error('Serviço não encontrado');
-      }
+      if (!found) throw new Error("Serviço não encontrado");
+      service = normalize(found);
     } catch (err) {
-      console.error("Erro carregando serviço", err);
-      error = err.message || String(err);
+      console.error("Erro carregando serviço:", err);
+      error = err.message || "Falha desconhecida ao carregar serviço";
     } finally {
       loading = false;
     }
   }
 
-  onMount(() => {
-    loadService();
-  });
+  onMount(loadService);
 </script>
 
-{#if loading}
-  <p>Carregando serviço...</p>
-{:else if error}
-  <p class="text-red-600">Erro ao carregar serviço: {error}</p>
-{:else if service}
-  <h1 class="text-2xl font-bold mb-2">{service.name}</h1>
-  <p class="mb-4">{service.description}</p>
+<!-- 🧭 Layout -->
+<div class="max-w-3xl mx-auto px-4 py-8">
+  {#if loading}
+    <p class="text-gray-600 text-center animate-pulse">Carregando serviço...</p>
 
-  <AvailabilityCalendar />
-  <BookingForm {service} />
-{:else}
-  <p>Serviço não encontrado.</p>
-{/if}
+  {:else if error}
+    <p class="text-red-600 text-center">⚠️ Erro ao carregar serviço: {error}</p>
+
+  {:else if service}
+    <h1 class="text-3xl font-bold mb-2 text-gray-800">{service.name}</h1>
+    <p class="mb-6 text-gray-700">{service.description}</p>
+
+    <div class="space-y-8">
+      <AvailabilityCalendar />
+      <BookingForm {service} />
+    </div>
+
+  {:else}
+    <p class="text-gray-500 text-center">Serviço não encontrado.</p>
+  {/if}
+</div>
