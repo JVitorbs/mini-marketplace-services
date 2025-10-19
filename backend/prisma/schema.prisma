@@ -1,70 +1,65 @@
-// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model Usuario {
-  id         Int          @id @default(autoincrement())
-  nome       String
-  email      String       @unique
-  senhaHash  String
-  role       Role
-  criadoEm   DateTime     @default(now())
-
-  servicos   Servico[]    @relation("PrestadorServicos")
-  agendas    Agenda[]     @relation("PrestadorAgendas")
-  contratos  Contratacao[] @relation("ClienteContratacoes")
+  id        Int           @id @default(autoincrement())
+  nome      String
+  email     String        @unique
+  senhaHash String
+  role      Role
+  criadoEm  DateTime      @default(now())
+  agendas   Agenda[]      @relation("PrestadorAgendas")
+  contratos Contratacao[] @relation("ClienteContratacoes")
+  servicos  Servico[]     @relation("PrestadorServicos")
 }
 
 model Servico {
-  id          Int              @id @default(autoincrement())
-  prestador   Usuario          @relation("PrestadorServicos", fields: [prestadorId], references: [id])
+  id          Int               @id @default(autoincrement())
   prestadorId Int
   tipo        String
   nome        String
   descricao   String
-  criadoEm    DateTime         @default(now())
-
+  criadoEm    DateTime          @default(now())
+  prestador   Usuario           @relation("PrestadorServicos", fields: [prestadorId], references: [id])
   variacoes   VariacaoServico[]
 }
 
 model VariacaoServico {
-  id         Int          @id @default(autoincrement())
-  servico    Servico      @relation(fields: [servicoId], references: [id])
+  id         Int           @id @default(autoincrement())
   servicoId  Int
   nome       String
-  preco      Decimal      @db.Decimal(10,2)
+  preco      Decimal       @db.Decimal(10, 2)
   duracaoMin Int
-
   contratos  Contratacao[]
+  servico    Servico       @relation(fields: [servicoId], references: [id])
 }
 
 model Agenda {
-  id          Int          @id @default(autoincrement())
-  prestador   Usuario      @relation("PrestadorAgendas", fields: [prestadorId], references: [id])
+  id          Int           @id @default(autoincrement())
   prestadorId Int
   dataInicio  DateTime
   dataFim     DateTime
-  disponivel  Boolean      @default(true)
-
+  disponivel  Boolean       @default(true)
+  prestador   Usuario       @relation("PrestadorAgendas", fields: [prestadorId], references: [id])
   contratos   Contratacao[]
 }
 
 model Contratacao {
-  id            Int             @id @default(autoincrement())
-  cliente       Usuario         @relation("ClienteContratacoes", fields: [clienteId], references: [id])
-  clienteId     Int
-  variacao      VariacaoServico @relation(fields: [variacaoId], references: [id])
-  variacaoId    Int
-  agenda        Agenda          @relation(fields: [agendaId], references: [id])
-  agendaId      Int
-  status        Status          @default(ATIVA)
-  contratadoEm  DateTime        @default(now())
+  id           Int             @id @default(autoincrement())
+  clienteId    Int
+  variacaoId   Int
+  agendaId     Int
+  status       Status          @default(ATIVA)
+  contratadoEm DateTime        @default(now())
+  agenda       Agenda          @relation(fields: [agendaId], references: [id])
+  cliente      Usuario         @relation("ClienteContratacoes", fields: [clienteId], references: [id])
+  variacao     VariacaoServico @relation(fields: [variacaoId], references: [id])
 }
 
 enum Role {
