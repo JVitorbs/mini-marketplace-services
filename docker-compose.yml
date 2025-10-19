@@ -27,7 +27,7 @@ services:
     volumes:
       - ./backend:/backend:cached
       - backend_node_modules:/backend/node_modules
-    command: sh -c "npm install && npx prisma generate && npm start"
+    command: sh -c "npm install && npx prisma generate && npx prisma db push && npx prisma db seed && npm start"
 
   frontend:
     build: ./frontend
@@ -37,6 +37,9 @@ services:
       - backend
     ports:
       - "5173:5173" # agora você acessa em http://localhost:5173
+    environment:
+      - VITE_API_BASE=http://localhost:3000
+      - VITE_SERVER_API_BASE=http://backend:3000
     working_dir: /frontend
     volumes:
       - ./frontend:/frontend:cached
