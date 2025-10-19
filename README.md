@@ -37,25 +37,14 @@ O Mini Marketplace Services é uma plataforma que conecta prestadores de serviç
 ### Visão de Alto Nível
 
 ```mermaid
-C4Context
-    title Arquitetura Mini Marketplace
-
-    Person(cliente, "Cliente", "Usuário que contrata serviços")
-    Person(prestador, "Prestador", "Usuário que oferece serviços")
-    
-    System_Boundary(marketplace, "Mini Marketplace") {
-        Container(frontend, "Frontend", "SvelteKit + Tailwind", "Interface web responsiva")
-        Container(backend, "Backend API", "Node.js + Express + Prisma", "API REST")
-        ContainerDb(database, "Database", "PostgreSQL 16", "Dados persistentes")
-    }
-    
-    System_Ext(docker, "Docker", "Containerização")
-    
-    Rel(cliente, frontend, "Navega e contrata", "HTTPS")
-    Rel(prestador, frontend, "Gerencia serviços", "HTTPS")
-    Rel(frontend, backend, "Consome API", "HTTP/JSON")
-    Rel(backend, database, "Persiste dados", "Prisma ORM")
-    Rel(docker, marketplace, "Orquestra", "Docker Compose")
+graph TD
+    A[Cliente<br><small>Usuário que contrata serviços</small>] -->|HTTPS| B[Frontend<br><small>SvelteKit + Tailwind</small>]
+    C[Prestador<br><small>Usuário que oferece serviços</small>] -->|HTTPS| B
+    B -->|HTTP/JSON| D[Backend API<br><small>Node.js + Express + Prisma</small>]
+    D -->|Prisma ORM| E[(Database<br><small>PostgreSQL 16</small>)]
+    F[Docker<br><small>Containerização</small>] -->|Docker Compose| B
+    F --> D
+    F --> E
 ```
 
 ### Arquitetura de Componentes
