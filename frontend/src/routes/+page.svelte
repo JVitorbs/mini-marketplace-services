@@ -8,6 +8,9 @@
   let loading = false;
   let error = null;
 
+  // lista de categorias extraída dos serviços
+  let categories = [];
+
   const API_BASE = import.meta.env.VITE_API_BASE ?? import.meta.env.VITE_SERVER_API_BASE ?? 'http://localhost:3000';
 
   async function loadServices() {
@@ -39,6 +42,10 @@
           durationMin: v.duracaoMin ?? v.duration ?? 0
         }))
       }));
+
+      // extrai categorias únicas presentes nos serviços
+      categories = Array.from(new Set(services.map(s => (s.tipo || '').trim()).filter(Boolean)));
+
       filtered = services.slice();
     } catch (err) {
       console.error('Erro carregando serviços', err);
@@ -53,7 +60,7 @@
     const cat = (category || '').toLowerCase().trim();
     filtered = services.filter(s => {
       const matchesSearch = !q || (s.name && s.name.toLowerCase().includes(q)) || (s.description && s.description.toLowerCase().includes(q));
-      const matchesCategory = !cat || (s.tipo && s.tipo.toLowerCase().includes(cat));
+      const matchesCategory = !cat || (s.tipo && s.tipo.toLowerCase() === cat);
       return matchesSearch && matchesCategory;
     });
   }
@@ -64,7 +71,8 @@
 </script>
 
 <h1 class="text-2xl font-bold mb-4">Serviços disponíveis</h1>
-<ServiceFilter onFilter={handleFilter} />
+<!-- passa as categorias que existem -->
+<ServiceFilter {categories} onFilter={handleFilter} />
 
 {#if loading}
   <p>Carregando serviços...</p>

@@ -6,21 +6,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          DEFAULT: "#2563eb", // azul
-          dark: "#1e40af",
-          light: "#3b82f6"
+        brand: {
+          light: "#D7D7D9",
+          dark: "#1C3D59",
         },
-        secondary: {
-          DEFAULT: "#10b981", // verde
-          dark: "#047857",
-          light: "#34d399"
-        }
+        primary: {
+          DEFAULT: "#F29544",   // --brand-orange
+          dark: "#F2884B",      // --brand-orange-2
+          light: "#FFD1A6",     // tom mais claro opcional
+        },
+        accent: "#F26457",       // --brand-red
       },
       fontFamily: {
-        sans: ["Inter", "Roboto", "sans-serif"]
-      }
+        sans: ["Inter", "Roboto", "sans-serif"],
+      },
     },
   },
   plugins: [],
-}
+};
