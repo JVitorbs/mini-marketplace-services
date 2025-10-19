@@ -8,7 +8,7 @@
   let loading = false;
   let error = null;
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+  const API_BASE = import.meta.env.VITE_API_BASE ?? import.meta.env.VITE_SERVER_API_BASE ?? 'http://localhost:3000';
 
   async function loadServices() {
     loading = true;
@@ -17,15 +17,20 @@
       const res = await fetch(`${API_BASE}/servicos`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+
+      // DEBUG: inspecione o payload bruto no console
+      console.debug('GET /servicos ->', data);
+
       // normaliza nomes de campos do backend para o esperado no frontend
-      services = data.map(s => ({
+      services = (data || []).map(s => ({
         id: s.id,
         name: s.nome || s.name,
         description: s.descricao || s.description,
+        tipo: s.tipo,
         variations: (s.variacoes || s.variations || []).map(v => ({
           name: v.nome || v.name,
-          price: v.preco || v.price || v.valor || 0,
-          duration: v.duracaoMin || v.duration || v.duracao || 0
+          price: v.preco ?? v.price ?? v.valor ?? 0,
+          duration: v.duracaoMin ?? v.duration ?? v.duracao ?? 0
         }))
       }));
       filtered = services;
